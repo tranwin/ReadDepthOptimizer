@@ -1,9 +1,21 @@
 import csv
 import numpy as np
+import argparse
 
-# Set parameters
-n = 1000000  # Sample size
-tr = 0.0331814 # Positive rate
+# Parse arguments
+parser = argparse.ArgumentParser(description='Run simulations and save results to a CSV file.')
+parser.add_argument('--n', type=int, default=1000000, help='Sample size')
+parser.add_argument('--threshold', type=float, required=True, help='Threshold for proportion of 1s')
+parser.add_argument('--cv', type=float, required=True, help='Coefficient of Variation as a percentage')
+args = parser.parse_args()
+
+# Set parameters from arguments
+n = args.n
+threshold = args.threshold
+cv = args.cv / 100  # Convert %CV to a decimal
+
+# Calculate tr based on CV
+tr = threshold * (1 + cv)
 ntr = int(n * tr)  # Number of trials (converted to integer)
 rep = 1000  # Number of repetitions
 num_trials = 100  # Number of datasets to generate
@@ -41,7 +53,7 @@ with open(csv_file_name, 'w', newline='') as csvfile:
                 topr.append(np.sum(ts1))  # Count occurrences of 1 in the sample and append to topr
 
             # Count the number of occurrences where the proportion of 1s is greater than the threshold
-            result = sum(1 for count in topr if count / dep < 0.0346)
+            result = sum(1 for count in topr if count / dep < threshold)
 
             # Add result to the current trial column
             row[f'trial_{trial+1}'] = result
@@ -52,12 +64,5 @@ with open(csv_file_name, 'w', newline='') as csvfile:
 
         # Write the row to the CSV file
         writer.writerow(row)
-
-    # Prepare the final row with the recorded dep values where the result was > 950
-#     final_row = {'dep': 'dep_value > 950'}
-#     final_row.update(last_result_dep_values)
-
-#     # Write the final row to the CSV file
-#     writer.writerow(final_row)
 
 print(f"Results have been saved to {csv_file_name}")
